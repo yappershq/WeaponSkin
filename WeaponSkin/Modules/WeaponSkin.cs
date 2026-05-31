@@ -187,25 +187,12 @@ internal partial class WeaponSkin : IModule
     {
         var attackerSlot = @params.AttackerPlayerSlot;
 
-        // Resolve the attacker via slot first (always safe; slot is a value type).
-        // The Pawn entity reached via AttackerPawnHandle can be partially freed
-        // by the engine between Event_Killed firing and this managed hook running
-        // (round-end cleanup, bot removal mid-tick, etc.), causing a null vtable
-        // crash when IsPlayer() reads the entity's vtable slot. See crash on mix
-        // 2026-05-30: "Tried calling a null virtual function. Index: 409. Called
-        // from: IsPlayer".
         if (attackerSlot < 0
             || _bridge.ClientManager.GetGameClient((PlayerSlot) attackerSlot) is not { } attackerClient)
         {
             return;
         }
 
-        // Validate the pawn entity before any vtable access. FindEntityByHandle
-        // does NOT guarantee the underlying CBaseEntity is still alive — the
-        // handle's serial-number check is best-effort and a recycled-into-null
-        // entity can slip through. IsValidEntity touches the CEntityInstance
-        // header field, not the vtable, so it is safe even when the entity
-        // memory has been cleared.
         if (_bridge.EntityManager.FindEntityByHandle(@params.AttackerPawnHandle) is not { IsValidEntity: true } attackerPawn
             || !attackerPawn.IsPlayer(true))
         {
