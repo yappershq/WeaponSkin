@@ -72,7 +72,11 @@ internal partial class WeaponSkin : IModule
 
         if (team <= CStrikeTeam.Spectator)
         {
-            return new (EHookAction.SkipCallReturnOverride);
+            // GiveNamedItem only supports Ignored and ChangeParamReturnDefault.
+            // SkipCallReturnOverride triggers a native FatalError.
+            // Redirect to a non-existent classname so the engine give is a silent no-op.
+            @params.SetOverride("weapon_none");
+            return new (EHookAction.ChangeParamReturnDefault);
         }
 
         var classname = @params.Classname;
